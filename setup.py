@@ -4,12 +4,12 @@ version = __import__('wallet').__version__
 install_requires = open('requirements.txt').readlines(),
 
 setup(
-    name='wallet-py3k',
+    name='wallet',
     version=version,
-    author='Egor Orlov',
-    author_email='oeegor@gmail.com',
+    author='Bastian Kuhn',
+    author_email='mail@bastian-kuhn.de',
     packages=['wallet', 'wallet.test'],
-    url='https://github.com/oeegor/wallet-py3k',
+    url='https://github.com/Bastian-Kuhn/wallet',
     license=open('LICENSE.txt').read(),
     description='Passbook file generator',
     long_description=open('README.md').read(),

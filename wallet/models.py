@@ -1,5 +1,5 @@
-# coding=utf8
-
+""" Apple Passbook """
+# pylint: disable=too-few-public-methods
 import decimal
 import hashlib
 from io import BytesIO
@@ -8,7 +8,8 @@ import subprocess
 import zipfile
 
 
-class Alignment:
+class Alignment():
+    """ Text Alignment """
     LEFT = 'PKTextAlignmentLeft'
     CENTER = 'PKTextAlignmentCenter'
     RIGHT = 'PKTextAlignmentRight'
@@ -16,13 +17,15 @@ class Alignment:
     NATURAL = 'PKTextAlignmentNatural'
 
 
-class BarcodeFormat:
+class BarcodeFormat():
+    """ Barcode Format"""
     PDF417 = 'PKBarcodeFormatPDF417'
     QR = 'PKBarcodeFormatQR'
     AZTEC = 'PKBarcodeFormatAztec'
 
 
-class TransitType:
+class TransitType():
+    """ Transit Type for Boarding Passes """
     AIR = 'PKTransitTypeAir'
     TRAIN = 'PKTransitTypeTrain'
     BUS = 'PKTransitTypeBus'
@@ -30,7 +33,8 @@ class TransitType:
     GENERIC = 'PKTransitTypeGeneric'
 
 
-class DateStyle:
+class DateStyle():
+    """ Date Style """
     NONE = 'PKDateStyleNone'
     SHORT = 'PKDateStyleShort'
     MEDIUM = 'PKDateStyleMedium'
@@ -38,28 +42,48 @@ class DateStyle:
     FULL = 'PKDateStyleFull'
 
 
-class NumberStyle:
+class NumberStyle():
+    """ Number Style """
     DECIMAL = 'PKNumberStyleDecimal'
     PERCENT = 'PKNumberStylePercent'
     SCIENTIFIC = 'PKNumberStyleScientific'
     SPELLOUT = 'PKNumberStyleSpellOut'
 
+class Field():
+    """ Wallet Text Field"""
 
-class Field(object):
+    def __init__(self, **kwargs):
+        """
+         Initiate Field
 
-    def __init__(self, key, value, label=''):
+        :param key: The key must be unique within the scope
+        :param value: Value of the Field
+        :param label: Optional Label Text for field
+        :param change_message: Optional. String that is displayed when the pass is updated
+        :param text_alignment: left/ center/ right, justified, natural
+        :return: Nothing
 
-        self.key = key  # Required. The key must be unique within the scope
-        self.value = value  # Required. Value of the field. For example, 42
-        self.label = label  # Optional. Label text for the field.
-        self.changeMessage = ''  # Optional. Format string for the alert text that is displayed when the pass is updated
-        self.textAlignment = Alignment.LEFT
+        """
+        # pylint: disable=invalid-name
+        self.key = kwargs['key']
+        self.value = kwargs['value']
+        self.label = kwargs.get('label', '')
+        self.changeMessage = kwargs.get('change_message', '')
+        self.textAlignment = {
+            'left': Alignment.LEFT,
+            'center': Alignment.CENTER,
+            'right': Alignment.RIGHT,
+            'justified': Alignment.JUSTIFIED,
+            'natural': Alignment.NATURAL,
+        }.get(kwargs.get('text_alignment', 'left'))
 
     def json_dict(self):
+        """ Return dict object from class """
         return self.__dict__
 
 
 class DateField(Field):
+    """ Wallet Date Field """
 
     def __init__(self, key, value, label=''):
         super(DateField, self).__init__(key, value, label)
@@ -68,6 +92,7 @@ class DateField(Field):
         self.isRelative = False  # If true, the labels value is displayed as a relative date
 
     def json_dict(self):
+        """ Return dict object from class """
         return self.__dict__
 
 
@@ -78,6 +103,7 @@ class NumberField(Field):
         self.numberStyle = NumberStyle.DECIMAL  # Style of date to display
 
     def json_dict(self):
+        """ Return dict object from class """
         return self.__dict__
 
 
@@ -88,10 +114,11 @@ class CurrencyField(Field):
         self.currencyCode = currencyCode  # ISO 4217 currency code
 
     def json_dict(self):
+        """ Return dict object from class """
         return self.__dict__
 
 
-class Barcode(object):
+class Barcode():
 
     def __init__(self, message, format=BarcodeFormat.PDF417, altText=''):
 
@@ -101,38 +128,42 @@ class Barcode(object):
         self.altText = altText  # Optional. Text displayed near the barcode
 
     def json_dict(self):
+        """ Return dict object from class """
         return self.__dict__
 
 
-class Location(object):
+class Location():
+    """
+    Pass Location Object
+    """
 
-    def __init__(self, latitude, longitude, altitude=0.0):
-        # Required. Latitude, in degrees, of the location.
-        try:
-            self.latitude = float(latitude)
-        except (ValueError, TypeError):
-            self.latitude = 0.0
-        # Required. Longitude, in degrees, of the location.
-        try:
-            self.longitude = float(longitude)
-        except (ValueError, TypeError):
-            self.longitude = 0.0
-        # Optional. Altitude, in meters, of the location.
-        try:
-            self.altitude = float(altitude)
-        except (ValueError, TypeError):
-            self.altitude = 0.0
-        # Optional. Notification distance
-        self.distance = None
-        # Optional. Text displayed on the lock screen when
-        # the pass is currently near the location
-        self.relevantText = ''
+    def __init__(self, **kwargs):
+        """
+        Fill Location Object.
+
+        :param latitude: Latitude Float
+        :param longitude: Longitude Float
+        :param altitude: optional
+        :param distance: optional
+        :param relevant_text: optional
+        :return: Nothing
+
+        """
+        # pylint: disable=invalid-name
+        for name in ['latitude', 'longitude', 'altitude']:
+            try:
+                setattr(self, name, float(kwargs[name]))
+            except (ValueError, TypeError):
+                setattr(self, name, 0.0)
+        self.distance = kwargs.get('distance')
+        self.relevantText = kwargs.get('relevant_text', '')
 
     def json_dict(self):
+        """ Return dict object from class """
         return self.__dict__
 
 
-class IBeacon(object):
+class IBeacon():
     def __init__(self, proximityuuid, major, minor):
         # IBeacon data
         self.proximityUUID = proximityuuid
@@ -143,49 +174,82 @@ class IBeacon(object):
         self.relevantText = ''
 
     def json_dict(self):
+        """ Return dict object from class """
         return self.__dict__
 
 
-class PassInformation(object):
+class PassInformation():
+    """
+    Basis Fields for Wallet Passes
+    """
 
     def __init__(self):
+        # pylint: disable=invalid-name
         self.headerFields = []
         self.primaryFields = []
         self.secondaryFields = []
         self.backFields = []
         self.auxiliaryFields = []
 
-    def addHeaderField(self, key, value, label):
-        self.headerFields.append(Field(key, value, label))
+    def add_header_field(self, **kwargs):
+        """
+        Add Simple Field to Header
+        :param key:
+        :param value:
+        :param label: optional
+        """
+        self.headerFields.append(Field(**kwargs))
 
-    def addPrimaryField(self, key, value, label):
-        self.primaryFields.append(Field(key, value, label))
+    def add_primary_field(self, **kwargs):
+        """
+        Add Simple Primary Field
+        :param key:
+        :param value:
+        :param label: optional
+        """
+        self.primaryFields.append(Field(**kwargs))
 
-    def addSecondaryField(self, key, value, label):
-        self.secondaryFields.append(Field(key, value, label))
+    def add_secondary_field(self, **kwargs):
+        """
+        Add Simple Secondary Field
+        :param key:
+        :param value:
+        :param label: optional
+        """
+        self.secondaryFields.append(Field(**kwargs))
 
-    def addBackField(self, key, value, label):
-        self.backFields.append(Field(key, value, label))
+    def add_back_field(self, **kwargs):
+        """
+        Add Simple Back Field
+        :param key:
+        :param value:
+        :param label: optional
+        """
+        self.backFields.append(Field(**kwargs))
 
-    def addAuxiliaryField(self, key, value, label):
-        self.auxiliaryFields.append(Field(key, value, label))
+    def add_auxiliary_field(self, **kwargs):
+        """
+        Add Simple Auxilary Field
+        :param key:
+        :param value:
+        :param label: optional
+        """
+        self.auxiliaryFields.append(Field(**kwargs))
 
     def json_dict(self):
-        d = {}
-        if self.headerFields:
-            d.update({'headerFields': [f.json_dict() for f in self.headerFields]})
-        if self.primaryFields:
-            d.update({'primaryFields': [f.json_dict() for f in self.primaryFields]})
-        if self.secondaryFields:
-            d.update({'secondaryFields': [f.json_dict() for f in self.secondaryFields]})
-        if self.backFields:
-            d.update({'backFields': [f.json_dict() for f in self.backFields]})
-        if self.auxiliaryFields:
-            d.update({'auxiliaryFields': [f.json_dict() for f in self.auxiliaryFields]})
-        return d
+        """
+        Create Json object of all Fields
+        """
+        data = {}
+        for what in ['headerFields', 'primaryFields', 'secondaryFields',
+                     'backFields', 'auxiliaryFields']:
+            if getattr(self, what):
+                data.update({what: [f.json_dict() for f in getattr(self, what)]})
+        return data
 
 
 class BoardingPass(PassInformation):
+    """ Wallet Boarding Pass """
 
     def __init__(self, transitType=TransitType.AIR):
         super(BoardingPass, self).__init__()
@@ -193,12 +257,13 @@ class BoardingPass(PassInformation):
         self.jsonname = 'boardingPass'
 
     def json_dict(self):
-        d = super(BoardingPass, self).json_dict()
-        d.update({'transitType': self.transitType})
-        return d
+        data = super(BoardingPass, self).json_dict()
+        data.update({'transitType': self.transitType})
+        return data
 
 
 class Coupon(PassInformation):
+    """ Wallet Coupon Pass """
 
     def __init__(self):
         super(Coupon, self).__init__()
@@ -206,6 +271,7 @@ class Coupon(PassInformation):
 
 
 class EventTicket(PassInformation):
+    """ Wallet Event Ticket """
 
     def __init__(self):
         super(EventTicket, self).__init__()
@@ -213,6 +279,7 @@ class EventTicket(PassInformation):
 
 
 class Generic(PassInformation):
+    """ Wallet Generic Pass """
 
     def __init__(self):
         super(Generic, self).__init__()
@@ -220,13 +287,14 @@ class Generic(PassInformation):
 
 
 class StoreCard(PassInformation):
+    """ Wallet Store Card """
 
     def __init__(self):
         super(StoreCard, self).__init__()
         self.jsonname = 'storeCard'
 
 
-class Pass(object):
+class Pass():
 
     def __init__(self, passInformation, json='', passTypeIdentifier='',
                  organizationName='', teamIdentifier=''):

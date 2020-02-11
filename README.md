@@ -2,7 +2,7 @@
 
 Python library to read/write [Apple Wallet](http://developer.apple.com/library/ios/#documentation/UserExperience/Conceptual/PassKit_PG/Chapters/Introduction.html#//apple_ref/doc/uid/TP40012195-CH1-SW1) (.pkpass) files
 
-This is a fork of https://github.com/devartis/passbook which doesn't support py3k.
+This is a fork of https://github.com/ofw/wallet-py3k which does not suits my needs
 
 
 ## Getting Started
