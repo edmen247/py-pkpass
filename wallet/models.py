@@ -467,8 +467,8 @@ class Pass():
         signature = self._create_signature(manifest, certificate, key, wwdr_certificate, password)
         if not file_name:
             file_name = BytesIO()
-        self._create_zip(pass_json, manifest, signature, file_name=file_name)
-        return file_name
+        datei = self._create_zip(pass_json, manifest, signature, file_name=file_name)
+        return datei
 
     def _create_pass_json(self):
         """
@@ -532,6 +532,7 @@ class Pass():
         for filename, filedata in self._files.items():
             z_file.writestr(filename, filedata)
         z_file.close()
+        return file_name
 
     def json_dict(self):
         """
