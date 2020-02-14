@@ -457,7 +457,7 @@ class Pass():
         self._files[name] = file_handle.read()
 
     # Creates the actual .pkpass file
-    def create(self, certificate, key, wwdr_certificate, password, file_name=None):
+    def create(self, certificate, key, wwdr_certificate, password=False, file_name=None):
         """
         Create .pkass File
         """
@@ -488,7 +488,7 @@ class Pass():
         return json.dumps(self._hashes).encode('utf-8')
 
     def _create_signature(self, manifest, certificate, key,
-                          wwdr_certificate, password):
+                          wwdr_certificate, password=False):
         """ Create and Save Signature """
         # pylint: disable=no-self-use, too-many-arguments
         openssl_cmd = [
@@ -504,9 +504,10 @@ class Pass():
             key,
             '-outform',
             'DER',
-            '-passin',
-            'pass:{}'.format(password),
         ]
+        if password:
+            openssl_cmd.append('-passin')
+            openssl_cmd.append('pass:{}'.format(password))
         process = subprocess.Popen(
             openssl_cmd,
             stderr=subprocess.PIPE,
@@ -564,7 +565,9 @@ class Pass():
         data[self.passInformation.jsonname] = self.passInformation.json_dict()
         for field in simple_fields:
             if hasattr(self, field):
-                data[field] = getattr(self, field)
+                content = getattr(self, field)
+                if content:
+                    data[field] = content
 
         if self.barcode:
             data.update({'barcode': self.barcode.json_dict()})
