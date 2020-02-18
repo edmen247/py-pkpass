@@ -68,7 +68,8 @@ class Field():
         self.key = kwargs['key']
         self.value = kwargs['value']
         self.label = kwargs.get('label', '')
-        self.changeMessage = kwargs.get('change_message', '')
+        if 'change_message' in kwargs:
+            self.changeMessage = kwargs['change_message'] # Don't Populate key if not needed
         self.textAlignment = {
             'left': Alignment.LEFT,
             'center': Alignment.CENTER,
@@ -193,7 +194,7 @@ class Barcode():
             'aztec' : BarcodeFormat.AZTEC,
         }.get(kwargs['format'], 'qr')
         self.message = kwargs['message']
-        self.messageEncoding = kwargs.get('encoding', 'utf-8')
+        self.messageEncoding = kwargs.get('encoding', 'iso-8859-1')
         self.altText = kwargs.get('alt_text', '')
 
     def json_dict(self):
@@ -407,7 +408,7 @@ class Pass():
         # Required. Brief description of the pass, used by the iOS
         # accessibility technologies.
         self.description = ''
-        # Required. Version of the file format. The value must be 1.
+        # Required.
         self.formatVersion = 1
 
         # Visual Appearance Keys
@@ -416,6 +417,8 @@ class Pass():
         self.labelColor = None  # Optional. Color of the label text
         self.logoText = None  # Optional. Text displayed next to the logo
         self.barcode = None  # Optional. Information specific to barcodes.
+        self.barcodes = []
+
         # Optional. If true, the strip image is displayed
         self.suppressStripShine = False
 
@@ -488,7 +491,7 @@ class Pass():
         return json.dumps(self._hashes).encode('utf-8')
 
     def _create_signature(self, manifest, certificate, key,
-                          wwdr_certificate, password=False):
+                          wwdr_certificate, password):
         """ Create and Save Signature """
         # pylint: disable=no-self-use, too-many-arguments
         openssl_cmd = [
@@ -504,10 +507,10 @@ class Pass():
             key,
             '-outform',
             'DER',
+            '-passin',
+            'pass:{}'.format(password),
         ]
-        if password:
-            openssl_cmd.append('-passin')
-            openssl_cmd.append('pass:{}'.format(password))
+
         process = subprocess.Popen(
             openssl_cmd,
             stderr=subprocess.PIPE,
@@ -520,6 +523,7 @@ class Pass():
             raise Exception(error)
 
         return der
+
 
     # Creates .pkpass (zip archive)
     def _create_zip(self, pass_json, manifest, signature, file_name=None):
@@ -541,7 +545,7 @@ class Pass():
         """
         simple_fields = [
             'description',
-            'format_version',
+            'formatVersion',
             'organizationName',
             'passTypeIdentifier',
             'serialNumber',
@@ -555,11 +559,13 @@ class Pass():
             'locations'
             'ibeacons',
             'userInfo',
+            'voided',
             'associatedStoreIdentifiers',
             'appLaunchURL',
             'exprirationDate',
             'webServiceURL',
             'authenticationToken',
+            'barcodes',
         ]
         data = {}
         data[self.passInformation.jsonname] = self.passInformation.json_dict()
