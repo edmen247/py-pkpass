@@ -6,7 +6,41 @@ from io import BytesIO
 import json
 import subprocess
 import zipfile
+import datetime
 
+from .exceptions import PassParameterException
+
+
+def check_subfields(fields):
+    """ Check the fields insised a field list """
+    iso_date = '%Y-%m-%dT%H:%M:%S.%f%z'
+    for field in fields:
+        if field.get('dateStyle') or field.get('timeStyle'):
+            try:
+                datetime.datetime.strptime(field['value'], iso_date)
+            except ValueError:
+                raise \
+                    PassParameterException("Date Field does not match format ({})".format(iso_date))
+
+def field_checks(field_name, field_data):
+    """ Check Field Contents if the valid """
+    if field_name == 'webServiceURL':
+        if not field_data.startswith('https://'):
+            raise PassParameterException("Webservie Url need to start with https://")
+
+    if field_name == 'headerFields':
+        if len(field_data) > 3:
+            raise PassParameterException("To many Header Fields (>3)")
+        check_subfields(field_data)
+
+    if field_name == 'primaryFields':
+        check_subfields(field_data)
+
+    if field_name == 'secondaryFields':
+        check_subfields(field_data)
+
+    if field_name == 'auxiliaryFields':
+        check_subfields(field_data)
 
 class Alignment():
     """ Text Alignment """
@@ -142,6 +176,7 @@ class NumberField(Field):
             'scientific' : NumberStyle.SCIENTIFIC,
             'spellout' : NumberStyle.SPELLOUT,
         }.get(kwargs.get('number_style', 'decimal'))
+        self.value = float(self.value)
 
     def json_dict(self):
         """ Return dict object from class """
@@ -166,6 +201,7 @@ class CurrencyField(Field):
 
         super(CurrencyField, self).__init__(**kwargs)
         self.currencyCode = kwargs['currency_code']
+        self.value = float(self.value)
 
     def json_dict(self):
         """ Return dict object from class """
@@ -324,7 +360,9 @@ class PassInformation():
         for what in ['headerFields', 'primaryFields', 'secondaryFields',
                      'backFields', 'auxiliaryFields']:
             if hasattr(self, what):
-                data.update({what: [f.json_dict() for f in getattr(self, what)]})
+                field_data = [f.json_dict() for f in getattr(self, what)]
+                field_checks(what, field_data)
+                data.update({what: field_data})
         return data
 
 
@@ -539,6 +577,7 @@ class Pass():
         z_file.close()
         return file_name
 
+
     def json_dict(self):
         """
         Return Pass as JSON Dict
@@ -573,6 +612,7 @@ class Pass():
             if hasattr(self, field):
                 content = getattr(self, field)
                 if content:
+                    field_checks(field, content)
                     data[field] = content
 
         if self.barcode:
