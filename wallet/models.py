@@ -15,12 +15,16 @@ def check_subfields(fields):
     """ Check the fields insised a field list """
     iso_date = '%Y-%m-%dT%H:%M:%S.%f%z'
     for field in fields:
-        if field.get('dateStyle') or field.get('timeStyle'):
+        date = field.get('dateStyle')
+        time = field.get('timeStyle')
+        # need none here because of db model default
+        if date or time:
             try:
                 datetime.datetime.strptime(field['value'], iso_date)
             except ValueError:
                 raise \
-                    PassParameterException("Date Field does not match format ({})".format(iso_date))
+                    PassParameterException("Date Field ({}) not match {}".format(field['value'],
+                                                                                 iso_date))
 
 def field_checks(field_name, field_data):
     """ Check Field Contents if the valid """
@@ -40,6 +44,9 @@ def field_checks(field_name, field_data):
         check_subfields(field_data)
 
     if field_name == 'auxiliaryFields':
+        check_subfields(field_data)
+
+    if field_name == 'backFields':
         check_subfields(field_data)
 
 class Alignment():
@@ -617,7 +624,14 @@ class Pass():
 
         if self.barcode:
             data.update({'barcode': self.barcode.json_dict()})
-
+        requied_fields = [
+            'description', 'formatVersion',
+            'organizationName', 'organizationName',
+            'serialNumber', 'teamIdentifier'
+        ]
+        for field in requied_fields:
+            if field not in data:
+                raise PassParameterException("Field {} missing".format(field))
         return data
 
 
