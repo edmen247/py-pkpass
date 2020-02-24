@@ -4,8 +4,23 @@ Python library to read/write [Apple Wallet](http://developer.apple.com/library/i
 
 This is a fork of https://github.com/ofw/wallet-py3k which does not suits my needs
 
+It's not complete finish is, but working. May the Method Parameters will change in the next 1-2 weeks.
 
-## Getting Started
+
+## New Features
+  * Direct Generation of passes without thee need to store them on a filesystem (if wanted)
+  * Password less Keys possible if wanted
+  * Validation of Fields and Passes including own Exception (PassParameterException)
+  * Complete Refactored and Simplified Code
+
+
+## ToDos
+  * Update of Getting Started
+  * Full Example including which Fields are Possible
+
+
+## Old: Getting Started
+This part from here needs to be updated:
 
 1. Create a Pass Type Id:
     1. Visit the [Visit the iOS Provisioning Portal](https://developer.apple.com/account/resources/certificates/list)
