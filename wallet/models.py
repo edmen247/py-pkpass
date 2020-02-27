@@ -32,6 +32,12 @@ def field_checks(field_name, field_data):
         if not field_data.startswith('https://'):
             raise PassParameterException("Webservie Url need to start with https://")
 
+    if field_name == 'serialNumber':
+        if not isinstance(field_data, str):
+            raise PassParameterException("Serial Needs to be a String")
+        if len(field_data) <= 16:
+            raise PassParameterException("Serial Number to Short")
+
     if field_name == 'headerFields':
         if len(field_data) > 3:
             raise PassParameterException("To many Header Fields (>3)")
