@@ -13,7 +13,7 @@ from .exceptions import PassParameterException
 
 def check_subfields(fields):
     """ Check the fields insised a field list """
-    iso_date = '%Y-%m-%dT%H:%M:%S.%f%z'
+    iso_date = '%Y-%m-%dT%H:%M:%S%z'
     for field in fields:
         date = field.get('dateStyle')
         time = field.get('timeStyle')
