@@ -6,25 +6,23 @@ from io import BytesIO
 import json
 import subprocess
 import zipfile
-import datetime
+import re
 
 from .exceptions import PassParameterException
 
 
 def check_subfields(fields):
     """ Check the fields insised a field list """
-    iso_date = '%Y-%m-%dT%H:%M:%S%z'
     for field in fields:
         date = field.get('dateStyle')
         time = field.get('timeStyle')
+        regex \
+            = r'^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])T(2[0-3]|[01][0-9]):([0-5][0-9]):([0-5][0-9])(\.[0-9]+)?(Z|[+-](?:2[0-3]|[01][0-9]):[0-5][0-9])?$'
         # need none here because of db model default
         if date or time:
-            try:
-                datetime.datetime.strptime(field['value'], iso_date)
-            except ValueError:
-                raise \
-                    PassParameterException("Date Field ({}) not match {}".format(field['value'],
-                                                                                 iso_date))
+            match_iso8601 = re.compile(regex).match
+            if match_iso8601(field['value']) is None:
+                raise PassParameterException("Date does not match iso8601 format")
 
 def field_checks(field_name, field_data):
     """ Check Field Contents if the valid """
