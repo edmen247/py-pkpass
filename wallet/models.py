@@ -103,6 +103,7 @@ class Field():
 
         :param key: The key must be unique within the scope
         :param value: Value of the Field
+        :param attributed_value: Optional. Attributed value of the field.
         :param label: Optional Label Text for field
         :param change_message: Optional. String that is displayed when the pass is updated
         :param text_alignment: left/ center/ right, justified, natural
@@ -111,7 +112,10 @@ class Field():
         """
         # pylint: disable=invalid-name
         self.key = kwargs['key']
-        self.value = kwargs['value']
+        if 'attributed_value' in kwargs:
+            self.attributedValue = kwargs['attributed_value']
+        else:
+            self.value = kwargs['value']
         self.label = kwargs.get('label', '')
         if 'change_message' in kwargs:
             self.changeMessage = kwargs['change_message'] # Don't Populate key if not needed
