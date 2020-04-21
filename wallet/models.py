@@ -7,6 +7,7 @@ import json
 import subprocess
 import zipfile
 import re
+import tempfile
 
 from .exceptions import PassParameterException
 
@@ -513,14 +514,14 @@ class Pass():
         self._files[name] = file_handle.read()
 
     # Creates the actual .pkpass file
-    def create(self, certificate, key, wwdr_certificate, password=False, file_name=None):
+    def create(self, certificate, key, wwdr_certificate, password=False, file_name=None, filemode=True):
         """
         Create .pkass File
         """
         # pylint: disable=too-many-arguments
         pass_json = self._create_pass_json()
         manifest = self._create_manifest(pass_json)
-        signature = self._create_signature(manifest, certificate, key, wwdr_certificate, password)
+        signature = self._create_signature(manifest, certificate, key, wwdr_certificate, password, filemode)
         if not file_name:
             file_name = BytesIO()
         datei = self._create_zip(pass_json, manifest, signature, file_name=file_name)
@@ -544,9 +545,24 @@ class Pass():
         return json.dumps(self._hashes).encode('utf-8')
 
     def _create_signature(self, manifest, certificate, key,
-                          wwdr_certificate, password):
+                          wwdr_certificate, password, filemode):
         """ Create and Save Signature """
         # pylint: disable=no-self-use, too-many-arguments
+        if not filemode:
+            #Use Tempfile
+            cert_file = tempfile.NamedTemporaryFile(mode='w')
+            cert_file.write(certificate)
+            cert_file.flush()
+            key_file = tempfile.NamedTemporaryFile(mode='w')
+            key_file.write(key)
+            key_file.flush()
+            wwdr_file = tempfile.NamedTemporaryFile(mode='w')
+            wwdr_file.write(wwdr_certificate)
+            wwdr_file.flush()
+            certificate = cert_file.name
+            key = key_file.name
+            wwdr_certificate = wwdr_file.name
+
         openssl_cmd = [
             'openssl',
             'smime',
