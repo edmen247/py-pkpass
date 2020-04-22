@@ -115,8 +115,7 @@ class Field():
         self.key = kwargs['key']
         if 'attributed_value' in kwargs:
             self.attributedValue = kwargs['attributed_value']
-        else:
-            self.value = kwargs['value']
+        self.value = kwargs['value']
         self.label = kwargs.get('label', '')
         if 'change_message' in kwargs:
             self.changeMessage = kwargs['change_message'] # Don't Populate key if not needed
