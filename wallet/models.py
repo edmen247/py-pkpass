@@ -275,9 +275,10 @@ class Location():
         for name in ['latitude', 'longitude', 'altitude']:
             try:
                 setattr(self, name, float(kwargs[name]))
-            except (ValueError, TypeError):
+            except (ValueError, TypeError, KeyError):
                 setattr(self, name, 0.0)
-        self.distance = kwargs.get('distance')
+        if 'distance' in kwargs:
+            self.distance = kwarg['distance']
         self.relevantText = kwargs.get('relevant_text', '')
 
     def json_dict(self):
@@ -486,9 +487,9 @@ class Pass():
 
         # Optional. Locations where the pass is relevant.
         # For example, the location of your store.
-        self.locations = None
+        self.locations = []
         # Optional. IBeacons data
-        self.ibeacons = None
+        self.ibeacons = []
         # Optional. Date and time when the pass becomes relevant
         self.relevantDate = None
 
@@ -625,7 +626,6 @@ class Pass():
             'foregroundColor',
             'labelColor',
             'logoText',
-            'locations'
             'ibeacons',
             'userInfo',
             'voided',
@@ -634,19 +634,34 @@ class Pass():
             'exprirationDate',
             'webServiceURL',
             'authenticationToken',
-            'barcodes',
         ]
         data = {}
         data[self.passInformation.jsonname] = self.passInformation.json_dict()
         for field in simple_fields:
+            print("check for:{}".format(field))
             if hasattr(self, field):
                 content = getattr(self, field)
                 if content:
                     field_checks(field, content)
                     data[field] = content
 
-        if self.barcode:
-            data.update({'barcode': self.barcode.json_dict()})
+        if self.barcodes:
+            data['barcodes'] = []
+            for barcode in self.barcodes:
+                data['barcodes'].append(barcode.json_dict())
+
+        if self.locations:
+            data['locations'] = []
+            for location in self.locations:
+                data['locations'].append(location.json_dict())
+            if len(data['locations']) >= 10:
+                raise PassParameterException("Field locations has more then 10 entries")
+
+        if self.ibeacons:
+            data['ibeacons'] = []
+            for ibeacon in self.ibeacons:
+                data['ibeacons'].append(ibeacon.json_dict())
+
         requied_fields = [
             'description', 'formatVersion',
             'organizationName', 'organizationName',
