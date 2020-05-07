@@ -638,7 +638,6 @@ class Pass():
         data = {}
         data[self.passInformation.jsonname] = self.passInformation.json_dict()
         for field in simple_fields:
-            print("check for:{}".format(field))
             if hasattr(self, field):
                 content = getattr(self, field)
                 if content:
