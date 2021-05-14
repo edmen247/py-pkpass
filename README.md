@@ -4,8 +4,6 @@ Python library to read/write [Apple Wallet](http://developer.apple.com/library/i
 
 This is a fork of https://github.com/ofw/wallet-py3k which does not suits my needs
 
-It's not complete finish is, but working. May the Method Parameters will change in the next 1-2 weeks.
-
 
 ## New Features
   * Direct Generation of passes without thee need to store them on a filesystem (if wanted)
