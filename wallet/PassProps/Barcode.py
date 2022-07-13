@@ -11,7 +11,7 @@ class Barcode:
     Barcode Field
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, message: str, qr_format=BarcodeFormat.QR, alt_text=''):
         """
         Initiate Field
 
@@ -20,14 +20,12 @@ class Barcode:
         :param encoding: Default utf-8
         :param alt_text: Optional Text displayed near the barcode
         """
-        self.format = {
-            "pdf417": BarcodeFormat.PDF417,
-            "qr": BarcodeFormat.QR,
-            "aztec": BarcodeFormat.AZTEC,
-        }.get(kwargs["format"], "qr")
-        self.message = kwargs["message"]
-        self.messageEncoding = kwargs.get("encoding", "iso-8859-1")
-        self.altText = kwargs.get("alt_text", "")
+        self.format = qr_format
+        self.message = message  # Required. Message or payload to be displayed
+        self.messageEncoding = (
+            "iso-8859-1"  # Required. Text encoding
+        )
+        self.altText = alt_text  # Optional. Text displayed near the barcode
 
     def json_dict(self):
         """Return dict object from class"""
