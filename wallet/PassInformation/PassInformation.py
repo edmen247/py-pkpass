@@ -1,4 +1,5 @@
 from wallet.PassProps import Field
+from wallet.Schemas import FieldProps
 
 
 class PassInformation:
@@ -13,50 +14,50 @@ class PassInformation:
         self.backFields = []
         self.auxiliaryFields = []
 
-    def add_header_field(self, **kwargs):
+    def add_header_field(self, field_props: FieldProps):
         """
         Add Simple Field to Header
         :param key:
         :param value:
         :param label: optional
         """
-        self.headerFields.append(Field(**kwargs))
+        self.headerFields.append(Field(field_props))
 
-    def add_primary_field(self, **kwargs):
+    def add_primary_field(self, field_props: FieldProps):
         """
         Add Simple Primary Field
         :param key:
         :param value:
         :param label: optional
         """
-        self.primaryFields.append(Field(**kwargs))
+        self.primaryFields.append(Field(field_props))
 
-    def add_secondary_field(self, **kwargs):
+    def add_secondary_field(self, field_props: FieldProps):
         """
         Add Simple Secondary Field
         :param key:
         :param value:
         :param label: optional
         """
-        self.secondaryFields.append(Field(**kwargs))
+        self.secondaryFields.append(Field(field_props))
 
-    def add_back_field(self, **kwargs):
+    def add_back_field(self, field_props: FieldProps):
         """
         Add Simple Back Field
         :param key:
         :param value:
         :param label: optional
         """
-        self.backFields.append(Field(**kwargs))
+        self.backFields.append(Field(field_props))
 
-    def add_auxiliary_field(self, **kwargs):
+    def add_auxiliary_field(self, field_props: FieldProps):
         """
         Add Simple Auxilary Field
         :param key:
         :param value:
         :param label: optional
         """
-        self.auxiliaryFields.append(Field(**kwargs))
+        self.auxiliaryFields.append(Field(field_props))
 
     def json_dict(self):
         """
