@@ -28,7 +28,7 @@ source <your-env-name>/bin/activate
   * Direct Generation of passes without thee need to store them on a filesystem (if wanted)
   * Password less Keys possible if wanted
   * Validation of Fields and Passes including own Exception (PassParameterException)
-  * Complete Refactored and Simplified Code
+  * Complete Refactored and Simplified Code (Still WIP)
 
 
 ## ToDos
@@ -40,7 +40,6 @@ source <your-env-name>/bin/activate
 
 
 ## Before creating a pkpass file you need to :
-
 1. Create a Pass Type Id:
     1. Visit the [Visit the iOS Provisioning Portal](https://developer.apple.com/account/resources/certificates/list)
     2. On the left, click Identifiers
@@ -79,12 +78,18 @@ from wallet.Pass import Pass
 from wallet.PassProps.Barcode import Barcode
 import uuid
 from wallet.Schemas.FieldProps import FieldProps
+
+
 pass_type_identifier = "pass.com.yourcompany.some_name"
 team_identifier = "ABCDE123"  # Your Apple team ID
+
+
 card = StoreCard()
 card.add_header_field(FieldProps(key="k2", value="69", label="Points"))
 card.add_secondary_field(FieldProps(key="k3", value="Small shark", label="Level"))
 card.add_back_field(FieldProps(key="k5", value="first backfield", label="bf1"))
+
+
 passfile = Pass(
     **{
         "pass_information": card,
@@ -94,6 +99,8 @@ passfile = Pass(
     }
 )
 passfile.logoText = "Sharks"
+
+
 # charge_response.id is trackable via the Stripe dashboard
 passfile.serialNumber = str(uuid.uuid4())
 passfile.barcodes.append(Barcode(message="testing", ))
@@ -101,6 +108,8 @@ passfile.description = "some discription"
 passfile.backgroundColor = "rgb(38, 93, 205)"
 passfile.foregroundColor = "rgb(255, 255, 255)"
 passfile.labelColor = "rgb(189, 189, 189)"
+
+
 # Including the icon and logo is necessary for the passbook to be valid.
 passfile.add_file("icon.png", open("shark-icon.png", "rb"))
 passfile.add_file("icon@2x.png", open("shark-icon.png", "rb"))
@@ -117,8 +126,7 @@ passfile.create(
     file_name="test_pass.pkpass",
 )
 ```
-
-[screenshot]()
+<img src="https://github.com/NafieAlhilaly/py-pkpass/blob/develop/Screenshot/pass_screenshot.png" alt="drawing" style="width:200px;"/>
 
 ### Notes
 
