@@ -1,6 +1,10 @@
 *.py[co]
 *.py~
 
+# pytest
+.pytest_cache
+__pycache__
+
 # Packages
 MANIFEST
 *.egg
@@ -31,3 +35,17 @@ pip-log.txt
 .DS_Store
 .idea/
 *.swp
+
+venv
+.vscode
+poetry.lock
+
+wallet/tmp
+
+.env
+
+generate_test_pass.py
+
+test_pass.pkpass
+
+icon2x.png

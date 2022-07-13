@@ -16,7 +16,7 @@ setup(
 
     install_requires=install_requires,
 
-    classifiers = [
+    classifiers=[
         'Development Status :: 3 - Alpha',
         'Environment :: Other Environment',
         'Intended Audience :: Developers',

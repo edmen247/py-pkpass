@@ -1,0 +1,39 @@
+name: Checks
+on:
+  pull_request:
+    branches:
+      - "develop"
+      - "master"
+  workflow_dispatch:
+jobs:
+  commitlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: wagoid/commitlint-github-action@v2
+  codelint:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.10]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - name: Lint with flake8
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8
+          flake8 . --ignore=E203,W605,W503 --count --show-source --max-complexity=16 --max-line-length=127 \
+          --statistics --exclude .git,__pycache__,__init__.py
+  unittests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: start the app & run unit tests
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+          pytest
