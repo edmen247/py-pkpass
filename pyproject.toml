@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "py-pkpass"
+version = "0.1.1"
+description = "python library to create pkpass files (Apple Wallet files)"
+authors = []
+license = "MIT license"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+[tool.poetry.dev-dependencies]
+six = "^1.16.0"
+black = "^22.6.0"
+flake8 = "^4.0.1"
+pytest = "^7.1.2"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
