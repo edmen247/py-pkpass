@@ -1,12 +1,15 @@
-from .Alignment import Alignment
 from .DateStyle import DateStyle
 from .NumberStyle import NumberStyle
+from wallet.Schemas import FieldProps
 
 
 class Field:
     """Wallet Text Field"""
 
-    def __init__(self, **kwargs):
+    def __init__(
+        self,
+        feild_props: FieldProps
+    ) -> None:
         """
          Initiate Field
 
@@ -19,23 +22,13 @@ class Field:
         :return: Nothing
 
         """
-
-        self.key = kwargs["key"]
-        if "attributed_value" in kwargs:
-            self.attributedValue = kwargs["attributed_value"]
-        self.value = kwargs["value"]
-        self.label = kwargs.get("label", "")
-        if "change_message" in kwargs:
-            self.changeMessage = kwargs[
-                "change_message"
-            ]  # Don't Populate key if not needed
-        self.textAlignment = {
-            "left": Alignment.LEFT,
-            "center": Alignment.CENTER,
-            "right": Alignment.RIGHT,
-            "justified": Alignment.JUSTIFIED,
-            "natural": Alignment.NATURAL,
-        }.get(kwargs.get("text_alignment", "left"))
+        self.key = feild_props.key
+        self.value = feild_props.value
+        self.label = feild_props.label
+        self.attributedValue = feild_props.attributed_value
+        if feild_props.change_message:
+            self.changeMessage = feild_props.change_message
+        self.textAlignment = feild_props.text_alignment
 
     def json_dict(self):
         """Return dict object from class"""
