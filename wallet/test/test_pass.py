@@ -3,23 +3,23 @@ from wallet.Pass import Pass
 from pytest import raises
 
 card = StoreCard()
+
+optional_pass_info = {
+    "logo_text": "Sharks",
+    "description": "some discription",
+    "background_color": "rgb(38, 93, 205)",
+    "foreground_color": "rgb(255, 255, 255)",
+    "label_color": "rgb(189, 189, 189)",
+    "serial_number": "12345"
+}
+
 pass_file = Pass(
-    **{
-        "pass_information": card,
-        "pass_type_identifier": "pass_type_identifier",
-        "organization_name": "organization_name",
-        "team_identifier": "team_identifier",
-    }
+    card,
+    "pass_type_identifier",
+    "team_identifier",
+    "organization_name",
+    **optional_pass_info
 )
-
-pass_file.logoText = "Sharks"
-
-# charge_response.id is trackable via the Stripe dashboard
-pass_file.serialNumber = "12345"
-pass_file.description = "some discription"
-pass_file.backgroundColor = "rgb(38, 93, 205)"
-pass_file.foregroundColor = "rgb(255, 255, 255)"
-pass_file.labelColor = "rgb(189, 189, 189)"
 
 pass_file_as_json = b'{"storeCard": {"headerFields": [], "primaryFields": [], "secondaryFields": [], "backFields": [], "auxiliaryFields": []}, "description": "some discription", "formatVersion": 1, "organizationName": "organization_name", "passTypeIdentifier": "pass_type_identifier", "serialNumber": "12345", "teamIdentifier": "team_identifier", "backgroundColor": "rgb(38, 93, 205)", "foregroundColor": "rgb(255, 255, 255)", "labelColor": "rgb(189, 189, 189)", "logoText": "Sharks"}'
 pass_file_manifest = b'{"pass.json": "3642041e506fd6a623a0bb00eb4fb8584e0264f9", "icon.png": "f6d49b2c2c03d2ef82e4d11841b60b58c7f18979", "logo.png": "f6d49b2c2c03d2ef82e4d11841b60b58c7f18979", "strip.png": "bf930d6ba371b42a461655c4b9719398e2068702"}'
@@ -50,18 +50,17 @@ def test_add_bad_files_to_pass():
 
 def test_create_pass_json():
     pass_as_json = pass_file._create_pass_json()
+    print(pass_as_json)
     assert pass_as_json == pass_file_as_json
 
 
 def test_create_manifest():
     pass_manifest = pass_file._create_manifest(pass_file_as_json)
-
     assert pass_manifest == pass_file_manifest
 
 
 def test_json_dict():
     json_pass = pass_file.json_dict()
-
     assert json_pass == {
         "storeCard": {
             "headerFields": [],

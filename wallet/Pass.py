@@ -1,11 +1,17 @@
 import decimal
 import hashlib
-from io import BytesIO
+from io import BytesIO, FileIO
 import json
 import subprocess
 import zipfile
 import tempfile
+from uuid import uuid4
 
+from wallet.PassInformation import PassInformation
+from typing import Optional, List, Union
+from wallet.PassProps.Barcode import Barcode
+from wallet.PassProps.Location import Location
+from wallet.PassProps.IBeacon import IBeacon
 from .exceptions import PassParameterException
 
 
@@ -20,97 +26,150 @@ def pass_handler(obj):
 
 
 class Pass:
-    def __init__(self, **kwargs):
+    def __init__(
+        self,
+        pass_information: PassInformation,
+        pass_type_identifier: str,
+        team_identifier: str,
+        organization_name: str,
+        *,
+        serial_number: str = str(uuid4()),
+        description: str = "pass description",
+        background_color: Optional[str] = None,
+        foreground_color: Optional[str] = None,
+        label_color: Optional[str] = None,
+        logo_text: Optional[str] = None,
+        barcode: Optional[Barcode] = None,
+        show_strip_img: bool = False,
+        web_service_url: str = None,
+        authentication_token: str = None,
+        locations: List[Location] = None,
+        ibeacons: List[IBeacon] = None,
+        relevant_date: str = None,
+        associated_store_identifiers: list = None,
+        app_launch_url: str = None,
+        user_info: json = None,
+        expriration_date: str = None,
+        voided: bool = False,
+    ) -> None:
         """
         Prepare Pass
-        :params pass_information:
-        :params pass_type_identifier:
-        :params organization_name:
-        :params team_identifier:
+        :params pass_information: Instance of the following classes :
+                - StoreCard
+                - BoardingPass
+                - Coupon
+                - EventTicket
+                - Generic
+
+        :params pass_type_identifier: Pass type identifier, as
+            issued by Apple. The value must
+            correspond with your signing certificate. Used for grouping.
+
+        :params organization_name: Display name of the organization
+            that originated and signed the pass.
+
+        :params team_identifier: Team identifier of the organization
+            that originated and
+            signed the pass, as issued by Apple.
+
+        :params serial_number: Serial number that
+            uniquely identifies the pass.
+
+        :params description: Brief description of
+            the pass, used by the iOS
+            accessibility technologies.
+
+        :params background_color: background color of the pass
+
+        :params foreground_color: Foreground color of the pass
+
+        :params label_color: Color of the label text
+
+        :params logo_text: Text displayed next to the logo
+
+        :params barcode:  Information specific to barcodes.
+
+        :params show_strip_img: If true, the strip image is displayed
+
+        :params web_service_rul: If present, authenticationToken must
+            be supplied
+
+        :params authentication_token: The authentication token to use with
+            the web service
+
+        :params locations: Locations where the pass is relevant.
+
+        :params relevent_date:  Date and time when the pass becomes relevant
+
+
+        :params associated_store_identifiers: A list of iTunes Store item
+            identifiers for
+            the associated apps.
+
+        :params user_info: Additional hidden data in json for the passbook
+
+        :params expriration_date: date where pass becomes expired
+
+        :params voided: make a pass expire
+
         """
 
         self._files = {}  # Holds the files to include in the .pkpass
         self._hashes = {}  # Holds the SHAs of the files array
 
-        # Standard Keys
-
-        # Required. Team identifier of the organization that originated and
-        # signed the pass, as issued by Apple.
-        self.teamIdentifier = kwargs["team_identifier"]
-        # Required. Pass type identifier, as issued by Apple. The value must
-        # correspond with your signing certificate. Used for grouping.
-        self.passTypeIdentifier = kwargs["pass_type_identifier"]
-        # Required. Display name of the organization that originated and
-        # signed the pass.
-        self.organizationName = kwargs["organization_name"]
-        # Required. Serial number that uniquely identifies the pass.
-        self.serialNumber = ""
-        # Required. Brief description of the pass, used by the iOS
-        # accessibility technologies.
-        self.description = ""
-        # Required.
+        # Standard Keys that required by Apple
+        self.teamIdentifier = team_identifier
+        self.passTypeIdentifier = pass_type_identifier
+        self.organizationName = organization_name
+        self.serialNumber = serial_number
+        self.description = description
         self.formatVersion = 1
 
-        # Visual Appearance Keys
-        self.backgroundColor = None  # Optional. Background color of the pass
-        self.foregroundColor = None  # Optional. Foreground color of the pass,
-        self.labelColor = None  # Optional. Color of the label text
-        self.logoText = None  # Optional. Text displayed next to the logo
-        self.barcode = None  # Optional. Information specific to barcodes.
+        # Visual Appearance Keys, optional attributes
+        self.backgroundColor = background_color
+        self.foregroundColor = foreground_color
+        self.labelColor = label_color
+        self.logoText = logo_text
+        self.barcode = barcode
         self.barcodes = []
-
-        # Optional. If true, the strip image is displayed
-        self.suppressStripShine = False
+        self.suppressStripShine = show_strip_img
 
         # Web Service Keys
-
-        # Optional. If present, authenticationToken must be supplied
-        self.webServiceURL = None
-        # The authentication token to use with the web service
-        self.authenticationToken = None
+        self.webServiceURL = web_service_url
+        self.authenticationToken = authentication_token
 
         # Relevance Keys
+        self.locations = locations
+        self.ibeacons = ibeacons
+        self.relevantDate = relevant_date
+        self.associatedStoreIdentifiers = associated_store_identifiers
+        self.appLaunchURL = app_launch_url
+        self.userInfo = user_info
 
-        # Optional. Locations where the pass is relevant.
-        # For example, the location of your store.
-        self.locations = []
-        # Optional. IBeacons data
-        self.ibeacons = []
-        # Optional. Date and time when the pass becomes relevant
-        self.relevantDate = None
+        self.exprirationDate = expriration_date
+        self.voided = voided
 
-        # Optional. A list of iTunes Store item identifiers for
-        # the associated apps.
-        self.associatedStoreIdentifiers = None
-        self.appLaunchURL = None
-        # Optional. Additional hidden data in json for the passbook
-        self.userInfo = None
+        self.passInformation = pass_information
 
-        self.exprirationDate = None
-        self.voided = None
-
-        self.passInformation = kwargs["pass_information"]
-
-    def add_file(self, name, file_handle):
+    def add_file(self, name: str, file_handle: FileIO):
         """
-        Add file to the file
+        Add new file to the pass files
         :params name: String name
         :params file_handle: File Handle
         """
         self._files[name] = file_handle.read()
 
-    # Creates the actual .pkpass file
     def create(
         self,
-        certificate,
-        key,
-        wwdr_certificate,
-        password=False,
-        file_name=None,
-        filemode=True,
+        certificate: str,
+        key: str,
+        wwdr_certificate: str,
+        password: Optional[str] = False,
+        file_name: Optional[str] = None,
+        filemode: bool = True,
     ):
         """
-        Create .pkass File
+        Create .pkass file
         """
         pass_json = self._create_pass_json()
         manifest = self._create_manifest(pass_json)
@@ -119,13 +178,10 @@ class Pass:
         )
         if not file_name:
             file_name = BytesIO()
-        datei = self._create_zip(
-            pass_json,
-            manifest,
-            signature,
-            file_name=file_name
+        pkpass_file = self._create_zip(
+            pass_json, manifest, signature, file_name=file_name
         )
-        return datei
+        return pkpass_file
 
     def _create_pass_json(self):
         """
@@ -133,20 +189,25 @@ class Pass:
         """
         return json.dumps(self, default=pass_handler).encode("utf-8")
 
-    def _create_manifest(self, pass_json):
+    def _create_manifest(self, pass_json: bytes):
         """
         Creates the hashes for the files and adds them
         into a json string
         """
-        # Creates SHA hashes for all files in package
         self._hashes["pass.json"] = hashlib.sha1(pass_json).hexdigest()
         for filename, filedata in self._files.items():
             self._hashes[filename] = hashlib.sha1(filedata).hexdigest()
         return json.dumps(self._hashes).encode("utf-8")
 
     def _create_signature(
-        self, manifest, certificate, key, wwdr_certificate, password, filemode
-    ):
+        self,
+        manifest: bytes,
+        certificate: str,
+        key: str,
+        wwdr_certificate: str,
+        password: str,
+        filemode: bool,
+    ) -> bytes:
         """Create and Save Signature"""
         if not filemode:
             # Use Tempfile
@@ -187,14 +248,19 @@ class Pass:
             stdin=subprocess.PIPE,
         )
         process.stdin.write(manifest)
-        der, error = process.communicate()
+        out_data, error = process.communicate()
         if process.returncode != 0:
             raise Exception(error)
 
-        return der
+        return out_data
 
-    # Creates .pkpass (zip archive)
-    def _create_zip(self, pass_json, manifest, signature, file_name=None):
+    def _create_zip(
+        self,
+        pass_json: bytes,
+        manifest: bytes,
+        signature: bytes,
+        file_name: Union[BytesIO, str],
+    ) -> Union[BytesIO, str]:
         """
         Creats .pkass ZIP Archive
         """
@@ -207,7 +273,7 @@ class Pass:
         z_file.close()
         return file_name
 
-    def json_dict(self):
+    def json_dict(self) -> dict:
         """
         Return Pass as JSON Dict
         """
