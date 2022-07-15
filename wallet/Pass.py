@@ -1,6 +1,6 @@
 import decimal
 import hashlib
-from io import BytesIO, FileIO
+from io import BytesIO, BufferedReader
 import json
 import subprocess
 import zipfile
@@ -39,7 +39,7 @@ class Pass:
         foreground_color: Optional[str] = None,
         label_color: Optional[str] = None,
         logo_text: Optional[str] = None,
-        barcode: Optional[Barcode] = None,
+        barcodes: Optional[Barcode] = None,
         show_strip_img: bool = False,
         web_service_url: str = None,
         authentication_token: str = None,
@@ -130,8 +130,10 @@ class Pass:
         self.foregroundColor = foreground_color
         self.labelColor = label_color
         self.logoText = logo_text
-        self.barcode = barcode
-        self.barcodes = []
+        if barcodes:
+            self.barcodes = [*barcodes]
+        else:
+            self.barcodes = []
         self.suppressStripShine = show_strip_img
 
         # Web Service Keys
@@ -151,13 +153,18 @@ class Pass:
 
         self.passInformation = pass_information
 
-    def add_file(self, name: str, file_handle: FileIO):
+    def add_file(
+        self, name: str, file_handle: Union[BufferedReader, bytes]
+    ) -> None:
         """
         Add new file to the pass files
         :params name: String name
         :params file_handle: File Handle
         """
-        self._files[name] = file_handle.read()
+        if type(file_handle) == bytes:
+            self._files[name] = file_handle
+        elif type(file_handle) == BufferedReader:
+            self._files[name] = file_handle.read()
 
     def create(
         self,

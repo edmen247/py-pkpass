@@ -50,7 +50,6 @@ def test_add_bad_files_to_pass():
 
 def test_create_pass_json():
     pass_as_json = pass_file._create_pass_json()
-    print(pass_as_json)
     assert pass_as_json == pass_file_as_json
 
 
