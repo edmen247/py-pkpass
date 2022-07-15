@@ -1,5 +1,10 @@
 # py-pkpass
 
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg?style=for-the-badge&logo=python)](https://github.com/psf/black)
+![](https://img.shields.io/badge/Cov-83%25-green?style=for-the-badge&logo=appveyor)
+![](https://img.shields.io/github/workflow/status/NafieAlhilaly/py-pkpass/Checks?label=Test&style=for-the-badge)
+
+
 Python library to read/write [Apple Wallet](http://developer.apple.com/library/ios/#documentation/UserExperience/Conceptual/PassKit_PG/Chapters/Introduction.html#//apple_ref/doc/uid/TP40012195-CH1-SW1) (.pkpass) files, see also [Pass Design and Creation](https://developer.apple.com/library/archive/documentation/UserExperience/Conceptual/PassKit_PG/Creating.html)
 
 This is a fork of https://github.com/Bastian-Kuhn/wallet , the original fork https://github.com/devartis/passbook
@@ -29,11 +34,12 @@ source <your-env-name>/bin/activate
   * Password less Keys possible if wanted
   * Validation of Fields and Passes including own Exception (PassParameterException)
   * Complete Refactored and Simplified Code (Still WIP)
+  * adding file to pass can be from eather IO(locally) or form a URL.
 
 
 ## ToDos
   * Update of Getting Started
-  * Add docker-compose
+  * Add docker/docker-compose
   * Validate data
   * Add NFC support
   * Full Example including which Fields are Possible
@@ -71,12 +77,11 @@ source <your-env-name>/bin/activate
 
 
 ## Typical Usage
-
+create your .py file on the root and try the following example
 ```python
-from wallet.PassStyles import StoreCard
+from wallet.PassStyles import StoreCard, EventTicket, Coupon, Generic, BoardingPass
 from wallet.Pass import Pass
 from wallet.PassProps.Barcode import Barcode
-import uuid
 from wallet.Schemas.FieldProps import FieldProps
 
 
@@ -84,40 +89,42 @@ pass_type_identifier = "pass.com.yourcompany.some_name"
 team_identifier = "ABCDE123"  # Your Apple team ID
 
 
-card = StoreCard()
+card = StoreCard() # or EventTicket, or Coupon, or Generic, or BoardingPass
 card.add_header_field(FieldProps(key="k2", value="69", label="Points"))
 card.add_secondary_field(FieldProps(key="k3", value="Small shark", label="Level"))
 card.add_back_field(FieldProps(key="k5", value="first backfield", label="bf1"))
 
+optional_pass_info = {
+    "logo_text": "Sharks",
+    "description": "some discription",
+    "background_color": "rgb(38, 93, 205)",
+    "foreground_color": "rgb(255, 255, 255)",
+    "label_color": "rgb(189, 189, 189)",
+    "barcodes": [Barcode(message="testing")]
+}
+
 
 passfile = Pass(
-    **{
-        "pass_information": card,
-        "pass_type_identifier": pass_type_identifier,
-        "organization_name": "organization_name",
-        "team_identifier": team_identifier,
-    }
+    card,
+    pass_type_identifier,
+    team_identifier,
+    "organization_name",
+    **optional_pass_info
 )
-passfile.logoText = "Sharks"
 
-
-# charge_response.id is trackable via the Stripe dashboard
-passfile.serialNumber = str(uuid.uuid4())
-passfile.barcodes.append(Barcode(message="testing", ))
-passfile.description = "some discription"
-passfile.backgroundColor = "rgb(38, 93, 205)"
-passfile.foregroundColor = "rgb(255, 255, 255)"
-passfile.labelColor = "rgb(189, 189, 189)"
-
-
-# Including the icon and logo is necessary for the passbook to be valid.
 passfile.add_file("icon.png", open("shark-icon.png", "rb"))
 passfile.add_file("icon@2x.png", open("shark-icon.png", "rb"))
 passfile.add_file("icon@3x.png", open("shark-icon.png", "rb"))
+
 passfile.add_file("logo.png", open("shark-icon.png", "rb"))
 passfile.add_file("logo@2x.png", open("shark-icon.png", "rb"))
 passfile.add_file("logo@3x.png", open("shark-icon.png", "rb"))
-passfile.add_file("strip.png", open("sea.jpg", "rb"))
+
+# strip image is optional
+# you can pass an image url directly to add_file
+strip = get("https://images.pexels.com/photos/5967796/pexels-photo-5967796.jpeg").content
+passfile.add_file("strip.png", strip)
+
 passfile.create(
     "signerCert.pem",
     "signerKey.pem",
@@ -126,6 +133,7 @@ passfile.create(
     file_name="test_pass.pkpass",
 )
 ```
+### example pass
 <img src="https://github.com/NafieAlhilaly/py-pkpass/blob/develop/Screenshot/pass_screenshot.png" alt="drawing" style="width:200px;"/>
 
 ### Notes
@@ -135,40 +143,3 @@ passfile.create(
 * `passfile.create()` returns the name of the generated file, which matches what you pass to it as the fifth parameter.
 * Valid `cardInfo` constructors mirror the pass types defined by Apple. For example, `StoreCard()`, `BoardingPass()`, `Coupon()`, etc.
 * The various "add field" methods (e.g. `addPrimaryField()`) take three unnamed parameters in the order `key`, `value`, `label`
-
-An example Flask route handler to return the generated pass files:
-
-```python
-@application.route("/passes/<path:fname>")
-def passes_proxy(fname):
-    """static passes serve"""
-    return send_from_directory("passes", fname, mimetype="application/vnd.apple.pkpass")
-```
-
-An example usage in a React app using Stripe and Stripe Elements to process payments and generate a store pass:
-
-```javascript
-paymentRequest.on('token', async (ev) => {
-  try {
-    const response = await fetch('https://your_server/charge', {
-      method: 'POST',
-      body: JSON.stringify({
-        token: ev.token.id,
-        amount: totalInCents,
-        description: purchasedItems.join(',\n')
-      }),
-      headers: {'content-type': 'application/json'},
-    });
-    if (!response.ok) {
-      throw new Error('There was a problem processing your payment.');
-    }
-    // Report to the browser that the payment was successful, prompting
-    // it to download the pass file to the user's Wallet
-    ev.complete('success');
-    const pkpass = await response.json();
-    window.location.href = `https://your_server/passes/${pkpass.filename}`;
-  } catch (error) {
-    throw new Error("There was a problem processing your payment.");
-  }
-});
-```
