@@ -9,9 +9,7 @@ from uuid import uuid4
 
 from wallet.PassInformation import PassInformation
 from typing import Optional, List, Union
-from wallet.PassProps.Barcode import Barcode
-from wallet.PassProps.Location import Location
-from wallet.PassProps.IBeacon import IBeacon
+from wallet.PassProps import Barcode, Location, IBeacon, NFC
 from .exceptions import PassParameterException
 
 
@@ -51,6 +49,7 @@ class Pass:
         user_info: json = None,
         expriration_date: str = None,
         voided: bool = False,
+        nfc: NFC = None
     ) -> None:
         """
         Prepare Pass
@@ -150,6 +149,8 @@ class Pass:
 
         self.exprirationDate = expriration_date
         self.voided = voided
+        if nfc:
+            self.NFC = nfc
 
         self.passInformation = pass_information
 
@@ -322,7 +323,7 @@ class Pass:
             data["locations"] = []
             for location in self.locations:
                 data["locations"].append(location.json_dict())
-            if len(data["locations"]) >= 10:
+            if len(data["locations"]) > 10:
                 raise PassParameterException("Field locations has<10 entries")
 
         if self.ibeacons:
